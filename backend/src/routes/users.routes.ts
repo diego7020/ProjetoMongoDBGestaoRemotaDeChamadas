@@ -2,21 +2,13 @@ import { Router } from "express";
 import { z } from "zod";
 import { isValidObjectId } from "mongoose";
 import { PAPEIS, UserModel } from "../models/User.js";
-import { hashSenha } from "../auth/password.js";
+import { hashSenha, senhaSchema } from "../auth/password.js";
 import { authenticate, requireRole } from "../middleware/auth.js";
 import { HttpError } from "../middleware/errors.js";
 import { diferencas, registrar } from "../audit/registrar.js";
 
 export const usersRouter = Router();
 usersRouter.use(authenticate, requireRole("admin"));
-
-const senhaSchema = z
-  .string()
-  .min(10, "Senha deve ter pelo menos 10 caracteres")
-  .max(128)
-  .regex(/[a-z]/, "Precisa de letra minúscula")
-  .regex(/[A-Z]/, "Precisa de letra maiúscula")
-  .regex(/[0-9]/, "Precisa de número");
 
 const criarSchema = z
   .object({
