@@ -1,0 +1,20 @@
+{
+  "name": "gestao-chamados-backend",
+  "version": "1.0.0",
+  "scripts": {
+    "dev": "tsx watch --env-file=../.env src/server.ts",
+    "build": "tsc",
+    "typecheck": "tsc --noEmit",
+    "db:check": "tsx --env-file=../.env src/scripts/check-db.ts"
+  },
+  "type": "module",
+  "private": true,
+  "dependencies": {
+    "mongoose": "^9.11.4"
+  },
+  "devDependencies": {
+    "@types/node": "^26.6.6",
+    "tsx": "^4.23.15",
+    "typescript": "^7.0.2"
+  }
+}
