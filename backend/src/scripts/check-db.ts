@@ -44,9 +44,10 @@ try {
   const statusRuim = await TicketModel.create({ titulo: "abc", descricao: "x", status: "xyz" as never, solicitante: user._id }).catch((e) => e);
   ok(statusRuim?.name === "ValidationError", "status inválido é recusado");
 
-  await TicketModel.deleteMany({ solicitante: user._id });
-  await UserModel.deleteMany({ email: `${tag}@exemplo.com` });
 } finally {
+  const userTeste = await UserModel.findOne({ email: `${tag}@exemplo.com` });
+  if (userTeste) await TicketModel.deleteMany({ solicitante: userTeste._id });
+  await UserModel.deleteMany({ email: `${tag}@exemplo.com` });
   await disconnectDB();
 }
 
