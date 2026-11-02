@@ -5,6 +5,7 @@ import { PAPEIS, UserModel } from "../models/User.js";
 import { hashSenha } from "../auth/password.js";
 import { authenticate, requireRole } from "../middleware/auth.js";
 import { HttpError } from "../middleware/errors.js";
+import { diferencas, registrar } from "../audit/registrar.js";
 
 export const usersRouter = Router();
 usersRouter.use(authenticate, requireRole("admin"));
@@ -43,6 +44,12 @@ usersRouter.get("/", async (_req, res) => {
 usersRouter.post("/", async (req, res) => {
   const { senha, ...dados } = criarSchema.parse(req.body);
   const user = await UserModel.create({ ...dados, senhaHash: await hashSenha(senha) });
+  await registrar(req, {
+    acao: "user.criar",
+    resultado: "sucesso",
+    alvo: { tipo: "user", id: user._id },
+    detalhes: { email: user.email, papel: user.papel },
+  });
   res.status(201).json(user);
 });
 
@@ -57,8 +64,14 @@ usersRouter.patch("/:id", async (req, res) => {
 
   const user = await UserModel.findById(id);
   if (!user) throw new HttpError(404, "Usuário não encontrado");
+  const antes = user.toObject();
   user.set(dados);
   if (senha) user.senhaHash = await hashSenha(senha);
   await user.save();
+
+  // Registra o que mudou; da senha registra só QUE mudou, nunca o valor.
+  const mudancas: Record<string, unknown> = diferencas(antes, user.toObject(), ["nome", "papel", "ativo"]);
+  if (senha) mudancas.senha = "alterada";
+  await registrar(req, { acao: "user.atualizar", resultado: "sucesso", alvo: { tipo: "user", id: user._id }, detalhes: mudancas });
   res.json(user);
 });
