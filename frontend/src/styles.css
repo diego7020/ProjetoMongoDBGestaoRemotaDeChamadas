@@ -1,0 +1,348 @@
+:root {
+  --fundo: #f4f5f7;
+  --card: #ffffff;
+  --texto: #1f2328;
+  --suave: #656d76;
+  --borda: #d8dde3;
+  --primaria: #2563eb;
+  --primaria-texto: #ffffff;
+  --selecionado: #eaf1ff;
+  --vermelho: #c62828;
+  --verde: #1b7f3b;
+  font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  font-size: 15px;
+  color: var(--texto);
+  background: var(--fundo);
+  color-scheme: light;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --fundo: #15171a;
+    --card: #1f2227;
+    --texto: #e6e8eb;
+    --suave: #9aa3ad;
+    --borda: #343a42;
+    --primaria: #4f8cff;
+    --selecionado: #1e2b44;
+    --vermelho: #ff6b6b;
+    --verde: #4cc27a;
+    color-scheme: dark;
+  }
+}
+
+* {
+  box-sizing: border-box;
+}
+body {
+  margin: 0;
+  background: var(--fundo);
+}
+h1, h2, h3, h4 {
+  margin: 0 0 12px;
+}
+h4 {
+  font-size: 0.95rem;
+  color: var(--suave);
+}
+
+input, select, textarea, button {
+  font: inherit;
+  color: inherit;
+}
+input, select, textarea {
+  width: 100%;
+  padding: 7px 9px;
+  border: 1px solid var(--borda);
+  border-radius: 6px;
+  background: var(--card);
+}
+textarea {
+  resize: vertical;
+}
+label {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  font-size: 0.85rem;
+  color: var(--suave);
+  margin-bottom: 10px;
+  flex: 1;
+}
+label.check {
+  flex-direction: row;
+  align-items: center;
+  flex: none;
+  margin: 0;
+}
+label.check input {
+  width: auto;
+}
+button {
+  padding: 7px 12px;
+  border: 1px solid var(--borda);
+  border-radius: 6px;
+  background: var(--card);
+  cursor: pointer;
+}
+button:hover:not(:disabled) {
+  border-color: var(--primaria);
+}
+button:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+button.primario {
+  background: var(--primaria);
+  border-color: var(--primaria);
+  color: var(--primaria-texto);
+}
+button.vermelho {
+  color: var(--vermelho);
+  border-color: var(--vermelho);
+}
+
+.card {
+  background: var(--card);
+  border: 1px solid var(--borda);
+  border-radius: 10px;
+  padding: 16px;
+}
+.centro {
+  text-align: center;
+  margin-top: 20vh;
+}
+.erro {
+  color: var(--vermelho);
+  margin: 8px 0;
+}
+.ok {
+  color: var(--verde);
+  margin: 8px 0;
+}
+.aviso {
+  background: var(--selecionado);
+  padding: 8px;
+  border-radius: 6px;
+}
+.dica, .vazio {
+  color: var(--suave);
+}
+.vazio {
+  text-align: center;
+  padding: 20px;
+}
+
+/* Login */
+.login {
+  min-height: 100vh;
+  display: grid;
+  place-items: center;
+  padding: 16px;
+}
+.login form {
+  width: 100%;
+  max-width: 360px;
+  display: flex;
+  flex-direction: column;
+}
+.login h1 {
+  font-size: 1.4rem;
+  text-align: center;
+}
+
+/* Topo */
+.topo {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  flex-wrap: wrap;
+  padding: 10px 16px;
+  background: var(--card);
+  border-bottom: 1px solid var(--borda);
+}
+.topo nav {
+  display: flex;
+  gap: 4px;
+  flex: 1;
+}
+.topo nav button {
+  border-color: transparent;
+}
+.topo nav button.ativa {
+  background: var(--selecionado);
+  border-color: var(--primaria);
+}
+.quem {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.papel {
+  font-size: 0.75rem;
+  padding: 2px 6px;
+  border-radius: 10px;
+  background: var(--selecionado);
+}
+
+main {
+  padding: 16px;
+  max-width: 1400px;
+  margin: 0 auto;
+}
+
+/* Layout chamados: lista + painel */
+.chamados {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 400px;
+  gap: 16px;
+  align-items: start;
+}
+@media (max-width: 900px) {
+  .chamados {
+    grid-template-columns: 1fr;
+  }
+}
+.lista {
+  background: var(--card);
+  border: 1px solid var(--borda);
+  border-radius: 10px;
+  padding: 16px;
+  overflow-x: auto;
+}
+.barra {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 8px;
+}
+.filtros {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  align-items: center;
+  margin-bottom: 12px;
+}
+.filtros select {
+  width: auto;
+}
+.linha {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+.acoes {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+}
+.bloco {
+  border-top: 1px solid var(--borda);
+  padding-top: 12px;
+  margin-top: 12px;
+}
+.perigo {
+  border-top: 1px solid var(--borda);
+  padding-top: 12px;
+  margin-top: 12px;
+}
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.9rem;
+}
+th, td {
+  text-align: left;
+  padding: 8px;
+  border-bottom: 1px solid var(--borda);
+  vertical-align: top;
+}
+th {
+  color: var(--suave);
+  font-weight: 600;
+}
+.lista tbody tr {
+  cursor: pointer;
+}
+.lista tbody tr:hover, tr.selecionado {
+  background: var(--selecionado);
+}
+tr.inativo {
+  opacity: 0.55;
+}
+.acoes.inicio {
+  justify-content: flex-start;
+}
+
+.etiqueta {
+  display: inline-block;
+  padding: 2px 8px;
+  border-radius: 10px;
+  font-size: 0.8rem;
+  white-space: nowrap;
+  background: var(--selecionado);
+}
+.status-aberto { background: #dbeafe; color: #1e40af; }
+.status-em_andamento { background: #fef3c7; color: #92400e; }
+.status-resolvido { background: #dcfce7; color: #166534; }
+.status-fechado { background: #e5e7eb; color: #374151; }
+.prio-baixa { background: #e5e7eb; color: #374151; }
+.prio-media { background: #dbeafe; color: #1e40af; }
+.prio-alta { background: #ffedd5; color: #9a3412; }
+.prio-critica { background: #fee2e2; color: #991b1b; }
+.arquivado { background: #ede9fe; color: #5b21b6; }
+.res-sucesso { background: #dcfce7; color: #166534; }
+.res-falha { background: #ffedd5; color: #9a3412; }
+.res-negado { background: #fee2e2; color: #991b1b; }
+
+.detalhe .etiquetas {
+  display: flex;
+  gap: 6px;
+  margin-bottom: 12px;
+}
+.detalhe dl {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 4px 12px;
+  margin: 0 0 8px;
+  font-size: 0.9rem;
+}
+.detalhe dt {
+  color: var(--suave);
+}
+.detalhe dd {
+  margin: 0;
+}
+.descricao {
+  white-space: pre-wrap;
+  border-top: 1px solid var(--borda);
+  padding-top: 12px;
+}
+
+.paginacao {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 8px;
+  margin-top: 12px;
+  font-size: 0.85rem;
+  color: var(--suave);
+}
+
+.usuarios {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+.usuarios section, .auditoria {
+  overflow-x: auto;
+}
+.auditoria pre {
+  margin: 0;
+  font-size: 0.75rem;
+  max-width: 320px;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
