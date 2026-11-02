@@ -19,7 +19,7 @@ export function notFound(_req: Request, _res: Response, next: NextFunction) {
 export async function errorHandler(err: unknown, req: Request, res: Response, _next: NextFunction) {
   if (err instanceof HttpError) {
     // tentativa sem autenticação (401) ou sem permissão (403) vai para a auditoria.
-    if (err.status === 401 || err.status === 403) {
+    if ((err.status === 401 || err.status === 403) && !req.originalUrl.startsWith("/auth/login")) {
       await registrar(req, {
         acao: "acesso.negado",
         resultado: "negado",
