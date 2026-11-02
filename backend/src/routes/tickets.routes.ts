@@ -5,6 +5,7 @@ import { PRIORIDADES, STATUS, TicketModel, type Ticket, type TicketDocument } fr
 import { UserModel } from "../models/User.js";
 import { authenticate, requireRole } from "../middleware/auth.js";
 import { HttpError } from "../middleware/errors.js";
+import { diferencas, registrar } from "../audit/registrar.js";
 
 // - usuario: cria; vê e edita só os PRÓPRIOS (título/descrição/prioridade, enquanto "aberto"); pode arquivar os próprios
 // - tecnico: vê todos; muda status/prioridade e assume chamados (atribui a si mesmo)
@@ -70,6 +71,13 @@ async function buscarVisivel(req: Request): Promise<TicketDocument> {
   const ticket = await TicketModel.findById(id);
   if (!ticket) throw new HttpError(404, "Chamado não encontrado");
   if (req.user!.papel === "usuario" && !ticket.solicitante.equals(req.user!._id)) {
+    // Para o cliente é 404, mas no log fica registrado que alguém tentou acessar chamado alheio.
+    await registrar(req, {
+      acao: "acesso.negado",
+      resultado: "negado",
+      alvo: { tipo: "ticket", id: ticket._id },
+      detalhes: { metodo: req.method, rota: req.originalUrl, motivo: "chamado_de_outro_usuario" },
+    });
     throw new HttpError(404, "Chamado não encontrado");
   }
   return ticket;
@@ -85,6 +93,12 @@ function arquivar(ticket: TicketDocument, req: Request) {
 ticketsRouter.post("/", async (req, res) => {
   const dados = criarSchema.parse(req.body);
   const ticket = await TicketModel.create({ ...dados, solicitante: req.user!._id });
+  await registrar(req, {
+    acao: "ticket.criar",
+    resultado: "sucesso",
+    alvo: { tipo: "ticket", id: ticket._id },
+    detalhes: { titulo: ticket.titulo, prioridade: ticket.prioridade },
+  });
   res.status(201).json(await ticket.populate(POPULAR));
 });
 
@@ -117,6 +131,7 @@ ticketsRouter.get("/:id", async (req, res) => {
 ticketsRouter.patch("/:id", async (req, res) => {
   const ticket = await buscarVisivel(req);
   const user = req.user!;
+  const antes = ticket.toObject();
 
   if (user.papel === "usuario") {
     const { arquivado, ...dados } = editarUsuarioSchema.parse(req.body);
@@ -164,11 +179,30 @@ ticketsRouter.patch("/:id", async (req, res) => {
   }
 
   await ticket.save();
+
+  const mudancas: Record<string, unknown> = diferencas(antes, ticket.toObject(), [
+    "titulo",
+    "status",
+    "prioridade",
+    "tecnicoResponsavel",
+    "arquivado",
+  ]);
+  if (antes.descricao !== ticket.descricao) mudancas.descricao = "alterada"; // texto longo: só registra que mudou
+  const acao =
+    !antes.arquivado && ticket.arquivado ? "ticket.arquivar" : antes.arquivado && !ticket.arquivado ? "ticket.desarquivar" : "ticket.atualizar";
+  await registrar(req, { acao, resultado: "sucesso", alvo: { tipo: "ticket", id: ticket._id }, detalhes: mudancas });
+
   res.json(await ticket.populate(POPULAR));
 });
 
 ticketsRouter.delete("/:id", requireRole("admin"), async (req, res) => {
   const ticket = await buscarVisivel(req);
   await ticket.deleteOne();
+  await registrar(req, {
+    acao: "ticket.excluir",
+    resultado: "sucesso",
+    alvo: { tipo: "ticket", id: ticket._id },
+    detalhes: { titulo: ticket.titulo, status: ticket.status, solicitante: ticket.solicitante },
+  });
   res.status(204).end();
 });
