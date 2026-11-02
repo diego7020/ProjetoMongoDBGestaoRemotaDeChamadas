@@ -1,6 +1,7 @@
 import type { NextFunction, Request, Response } from "express";
 import { z } from "zod";
 import mongoose from "mongoose";
+import { registrar } from "../audit/registrar.js";
 
 export class HttpError extends Error {
   constructor(
@@ -15,8 +16,16 @@ export function notFound(_req: Request, _res: Response, next: NextFunction) {
   next(new HttpError(404, "Rota não encontrada"));
 }
 
-export function errorHandler(err: unknown, _req: Request, res: Response, _next: NextFunction) {
+export async function errorHandler(err: unknown, req: Request, res: Response, _next: NextFunction) {
   if (err instanceof HttpError) {
+    // tentativa sem autenticação (401) ou sem permissão (403) vai para a auditoria.
+    if (err.status === 401 || err.status === 403) {
+      await registrar(req, {
+        acao: "acesso.negado",
+        resultado: "negado",
+        detalhes: { metodo: req.method, rota: req.originalUrl, status: err.status, motivo: err.message },
+      });
+    }
     return res.status(err.status).json({ erro: err.message });
   }
   if (err instanceof z.ZodError) {
