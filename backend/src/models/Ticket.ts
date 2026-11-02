@@ -14,6 +14,9 @@ export interface Ticket {
   solicitante: Types.ObjectId;
   tecnicoResponsavel: Types.ObjectId | null;
   fechadoEm: Date | null;
+  arquivado: boolean;
+  arquivadoEm: Date | null;
+  arquivadoPor: Types.ObjectId | null;
   criadoEm: Date;
   atualizadoEm: Date;
 }
@@ -27,6 +30,9 @@ const ticketSchema = new Schema<Ticket>(
     solicitante: { type: Schema.Types.ObjectId, ref: "User", required: true, immutable: true },
     tecnicoResponsavel: { type: Schema.Types.ObjectId, ref: "User", default: null },
     fechadoEm: { type: Date, default: null },
+    arquivado: { type: Boolean, default: false },
+    arquivadoEm: { type: Date, default: null },
+    arquivadoPor: { type: Schema.Types.ObjectId, ref: "User", default: null },
   },
   {
     timestamps: { createdAt: "criadoEm", updatedAt: "atualizadoEm" },
@@ -41,7 +47,7 @@ const ticketSchema = new Schema<Ticket>(
 
 ticketSchema.index({ solicitante: 1, criadoEm: -1 });
 ticketSchema.index({ tecnicoResponsavel: 1, status: 1 });
-ticketSchema.index({ status: 1, prioridade: 1 });
+ticketSchema.index({ arquivado: 1, status: 1, prioridade: 1 });
 
 ticketSchema.pre("save", function () {
   if (this.isModified("status")) {

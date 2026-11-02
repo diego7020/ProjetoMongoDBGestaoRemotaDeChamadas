@@ -7,7 +7,8 @@
     "typecheck": "tsc --noEmit",
     "db:check": "tsx --env-file=../.env src/scripts/check-db.ts",
     "create-admin": "tsx --env-file=../.env src/scripts/create-admin.ts",
-    "start": "node --env-file=../.env dist/server.js"
+    "start": "node --env-file=../.env dist/server.js",
+    "test": "node --import tsx --env-file=../.env --test src/tests/*.test.ts"
   },
   "type": "module",
   "private": true,
