@@ -1,3 +1,4 @@
+#!/usr/bin/env bash
 set -euo pipefail
 
 RAIZ="$(cd "$(dirname "$0")" && pwd)"
@@ -40,7 +41,42 @@ start() {
   fi
 }
 
-parar() { 
+# Config do tunel para facilitar
+cloudflared_bin() {
+  command -v cloudflared 2>/dev/null || { [ -x "$HOME/.local/bin/cloudflared" ] && echo "$HOME/.local/bin/cloudflared"; } || true
+}
+
+share() {
+  local cf; cf=$(cloudflared_bin)
+  [ -n "$cf" ] || { echo "cloudflared não encontrado. Instale e rode de novo (veja o CLAUDE.md)."; exit 1; }
+  start
+
+  echo "▶ Interface para o túnel (versão compilada)"
+  (cd "$RAIZ/frontend" && npx vite build --logLevel error)
+  if rodando preview; then echo "  • já estava rodando"; else
+    (cd "$RAIZ/frontend"; nohup node node_modules/vite/bin/vite.js preview >"$RUN/preview.log" 2>&1 & echo $! >"$RUN/preview.pid")
+    esperar_porta http://localhost:4173 Preview preview && echo "  ✓ http://localhost:4173"
+  fi
+
+  echo "▶ Túnel (Cloudflare)"
+  if ! rodando tunel; then
+    : >"$RUN/tunel.log"
+    nohup "$cf" tunnel --no-autoupdate --url http://localhost:4173 >"$RUN/tunel.log" 2>&1 & echo $! >"$RUN/tunel.pid"
+  fi
+  local url=""
+  for _ in $(seq 1 60); do
+    url=$(grep -oE 'https://[a-z0-9-]+\.trycloudflare\.com' "$RUN/tunel.log" | head -1 || true)
+    [ -n "$url" ] && break
+    sleep 0.5
+  done
+  [ -n "$url" ] || { echo "  ✗ túnel não subiu. Veja: ./app logs tunel"; exit 1; }
+  echo "$url" >"$RUN/tunel.url"
+  echo
+  echo "  🌐 Link para os colegas: $url"
+  echo "     (o link muda a cada ./app share; encerre com ./app unshare ou ./app stop)"
+}
+
+parar() {
   if rodando "$1"; then
     kill "$(cat "$RUN/$1.pid")" && echo "  ✓ $1 parado"
   else
@@ -49,7 +85,15 @@ parar() {
   rm -f "$RUN/$1.pid"
 }
 
+unshare() {
+  echo "▶ Encerrando compartilhamento"
+  parar tunel
+  parar preview
+  rm -f "$RUN/tunel.url"
+}
+
 stop() {
+  unshare
   echo "▶ Parando"
   parar front
   parar api
@@ -66,14 +110,16 @@ status() {
   fi
   rodando api && echo "API:       rodando (http://127.0.0.1:3000)" || echo "API:       parada"
   rodando front && echo "Interface: rodando (http://localhost:5173)" || echo "Interface: parada"
+  rodando tunel && echo "Túnel:     $(cat "$RUN/tunel.url" 2>/dev/null || echo "subindo...")" || echo "Túnel:     desligado"
 }
 
 logs() {
   case "${1:-api}" in
     api) tail -f "$RUN/api.log" ;;
     front) tail -f "$RUN/front.log" ;;
+    tunel) tail -f "$RUN/tunel.log" ;;
     db) docker compose -f "$RAIZ/docker-compose.yml" logs -f mongo ;;
-    *) echo "Uso: ./app logs [api|front|db]"; exit 1 ;;
+    *) echo "Uso: ./app logs [api|front|tunel|db]"; exit 1 ;;
   esac
 }
 
@@ -82,6 +128,8 @@ case "${1:-}" in
   stop) stop ;;
   restart) stop; start ;;
   status) status ;;
+  share) share ;;
+  unshare) unshare ;;
   logs) logs "${2:-}" ;;
-  *) echo "Uso: ./app start | stop | restart | status | logs [api|front|db]"; exit 1 ;;
+  *) echo "Uso: ./app start | stop | restart | status | share | unshare | logs [api|front|tunel|db]"; exit 1 ;;
 esac
