@@ -1,6 +1,7 @@
 // Única porta de entrada para a API. Toda requisição leva o token (Zero Trust:
 // o frontend não "decide" nada sozinho — quem autoriza é sempre o backend).
-const API_URL = import.meta.env.VITE_API_URL ?? "http://127.0.0.1:3000";
+// "/api" na mesma origem da página: o Vite repassa para a API local (ver vite.config.ts)
+const API_URL = import.meta.env.VITE_API_URL ?? "/api";
 const CHAVE_TOKEN = "token";
 
 export class ApiError extends Error {

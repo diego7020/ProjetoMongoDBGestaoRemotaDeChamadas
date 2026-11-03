@@ -12,6 +12,7 @@ import { auditRouter } from "./routes/audit.routes.js";
 export function createApp() {
   const app = express();
 
+  app.set("trust proxy", "loopback");
   app.use(helmet());
   app.use(cors({ origin: env.CORS_ORIGIN })); // nada alem do front consegue chamar a api
   app.use(express.json({ limit: "10kb" })); // limitar o payload né
