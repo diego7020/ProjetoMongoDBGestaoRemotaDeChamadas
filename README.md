@@ -62,6 +62,20 @@ Contas são criadas só pelo admin (não há cadastro público).
 - **Neste projeto:** o acesso externo (`./app share`) usa HTTPS. O TLS termina no Cloudflare e de lá até a máquina o tráfego segue por um túnel criptografado. Internamente, front, API e banco conversam apenas via `127.0.0.1`.
 - **Em produção:** certificado válido (ex.: Let's Encrypt) em um proxy reverso (Nginx/Caddy) ou no próprio Cloudflare, com HSTS e redirecionamento de HTTP→HTTPS. MongoDB com TLS habilitado (`--tlsMode requireTLS`) caso fique em outro servidor, e acesso ao banco restrito por rede privada/firewall.
 
+## CI/CD
+
+- **CI** (`.github/workflows/ci.yml`): em todo PR e push na `main`/`developer` roda typecheck, testes da API contra um MongoDB com `--auth` (segredos gerados na hora) e build do front.
+- **CD** (`.github/workflows/cd.yml`): quando o CI passa na `main`, publica as imagens `chamados-api` e `chamados-web` no GitHub Container Registry (tags `latest` e `sha-<commit>`), usando só o token temporário do workflow.
+
+Rodar a versão publicada (usa o mesmo `.env`):
+
+```bash
+docker compose -f docker-compose.prod.yml pull
+docker compose -f docker-compose.prod.yml up -d --wait   # → http://localhost:8080
+```
+
+Nesse modo só o Nginx (front) publica porta. A API e o Mongo ficam em redes internas do Docker (o Mongo numa rede sem saída) e os containers rodam sem root, com sistema de arquivos somente leitura. Atrás de um túnel (ex.: `cloudflared --url http://localhost:8080`), defina `TRUST_PROXY_HOPS=2`.
+
 ## Estrutura
 
 ```

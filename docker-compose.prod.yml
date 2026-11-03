@@ -1,0 +1,66 @@
+name: chamados-prod
+
+x-hardening: &hardening
+  read_only: true
+  cap_drop: [ALL]
+  security_opt: ["no-new-privileges:true"]
+
+services:
+  mongo:
+    image: mongo:9
+    restart: unless-stopped
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: ${MONGO_ROOT_USER}
+      MONGO_INITDB_ROOT_PASSWORD: ${MONGO_ROOT_PASSWORD}
+      MONGO_INITDB_DATABASE: ${MONGO_DB}
+      MONGO_APP_USER: ${MONGO_APP_USER}
+      MONGO_APP_PASSWORD: ${MONGO_APP_PASSWORD}
+      MONGO_DB: ${MONGO_DB}
+    command: ["mongod", "--auth", "--bind_ip_all"]
+    volumes:
+      - mongo-data:/data/db
+      - ./docker/mongo-init:/docker-entrypoint-initdb.d:ro
+    networks: [dados]
+    healthcheck:
+      test: ["CMD", "mongosh", "--quiet", "--eval", "db.adminCommand('ping').ok"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  api:
+    image: ghcr.io/${GHCR_OWNER:-diego7020}/chamados-api:${TAG:-latest}
+    restart: unless-stopped
+    <<: *hardening
+    environment:
+      MONGODB_URI: mongodb://${MONGO_APP_USER}:${MONGO_APP_PASSWORD}@mongo:27017/${MONGO_DB}?authSource=${MONGO_DB}
+      JWT_SECRET: ${JWT_SECRET}
+      JWT_EXPIRES_IN: ${JWT_EXPIRES_IN:-15m}
+      CORS_ORIGIN: http://localhost:${WEB_PORT:-8080}
+      TRUST_PROXY: ${TRUST_PROXY_HOPS:-1}
+      ADMIN_EMAIL: ${ADMIN_EMAIL}
+      ADMIN_NOME: ${ADMIN_NOME:-Administrador}
+      ADMIN_SENHA: ${ADMIN_SENHA:-}
+    depends_on:
+      mongo:
+        condition: service_healthy
+    networks: [dados, web]
+
+  web:
+    image: ghcr.io/${GHCR_OWNER:-diego7020}/chamados-web:${TAG:-latest}
+    restart: unless-stopped
+    <<: *hardening
+    tmpfs: [/tmp]
+    ports:
+      - "127.0.0.1:${WEB_PORT:-8080}:8080"
+    depends_on:
+      api:
+        condition: service_healthy
+    networks: [web]
+
+volumes:
+  mongo-data:
+
+networks:
+  dados:
+    internal: true
+  web:

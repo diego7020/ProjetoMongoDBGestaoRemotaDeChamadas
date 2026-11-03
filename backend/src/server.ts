@@ -4,7 +4,7 @@ import { createApp } from "./app.js";
 
 await connectDB();
 
-// só localhost; em prod ficaria atrás de um proxy reverso com https
-createApp().listen(env.PORT, "127.0.0.1", () => {
-  console.log(`API rodando em http://127.0.0.1:${env.PORT}`);
+// padrão é localhost; no container fica atras do Nginx ou seja a porta da nossa api não fica exposta
+createApp().listen(env.PORT, env.HOST, () => {
+  console.log(`API rodando em http://${env.HOST}:${env.PORT}`);
 });
